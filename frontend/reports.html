@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports | Smart Medication Tracker</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #e3f2fd, #ffffff);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background-color: #1565c0;
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    main {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .report-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .report-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      width: 250px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .report-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(21, 101, 192, 0.3);
+    }
+
+    .report-card h3 {
+      color: #1565c0;
+      margin-bottom: 0.5rem;
+    }
+
+    .report-card p {
+      font-size: 1rem;
+      color: #555;
+    }
+
+    canvas {
+      max-width: 700px;
+      width: 90%;
+      margin-top: 2rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    footer {
+      background-color: #1565c0;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <header>📊 Reports & Analytics</header>
+
+  <main>
+    <section class="report-summary">
+      <div class="report-card">
+        <h3>💊 Medicines Taken</h3>
+        <p><strong>45 / 50</strong> this month</p>
+      </div>
+
+      <div class="report-card">
+        <h3>⏰ Reminders Completed</h3>
+        <p><strong>90%</strong> on-time intake</p>
+      </div>
+
+      <div class="report-card">
+        <h3>🩺 Health Status</h3>
+        <p>Stable & Improving</p>
+      </div>
+
+      <div class="report-card">
+        <h3>📅 Next Appointment</h3>
+        <p>Dr. Meera Sharma - 5th Nov 2025</p>
+      </div>
+    </section>
+
+    <h2 style="color:#1565c0;">📈 Monthly Progress Overview</h2>
+    <canvas id="medChart"></canvas>
+
+    <h2 style="margin-top:3rem; color:#1565c0;">💊 Medicine Adherence Trend</h2>
+    <canvas id="trendChart"></canvas>
+  </main>
+
+  <footer>
+    &copy; 2025 Smart Medication Tracker | Designed with 💙 by Rohit
+  </footer>
+
+  <script>
+    // Bar Chart: Medicines taken per week
+    const ctx = document.getElementById('medChart');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        datasets: [{
+          label: 'Medicines Taken',
+          data: [12, 10, 11, 12],
+          backgroundColor: '#42a5f5'
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true }
+        },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Weekly Medicine Intake' }
+        }
+      }
+    });
+
+    // Line Chart: Adherence trend
+    const ctx2 = document.getElementById('trendChart');
+    new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Adherence %',
+          data: [80, 85, 90, 92, 95, 97],
+          borderColor: '#1565c0',
+          backgroundColor: 'rgba(21,101,192,0.2)',
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true, max: 100 }
+        },
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: 'Adherence Over Months' }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
