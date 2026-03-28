@@ -3,32 +3,48 @@ document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("loginForm");
   const messageBox = document.getElementById("messageBox");
 
-  form.addEventListener("submit", function (e) {
+  // 🔗 Backend URL (CHANGE THIS)
+  const API_URL = "https://medication-reminder-gvb4.onrender.com";
+
+  form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-    // Check if user exists
-    if (!storedUser) {
-      showMessage("⚠️ No user found. Please sign up first.", "error");
-      return;
-    }
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
 
-    // Validate credentials
-    if (email === storedUser.email && password === storedUser.password) {
-      showMessage("✅ Login successful! Redirecting...", "success");
+      const data = await response.json();
 
-      // Simulate logged-in session (you can replace with tokens later)
-      localStorage.setItem("isLoggedIn", "true");
+      if (data.success) {
+        showMessage("✅ Login successful! Redirecting...", "success");
 
-      setTimeout(() => {
-        window.location.href = "dashboard.html";
-      }, 1500);
-    } else {
-      showMessage("❌ Invalid email or password.", "error");
+        // ✅ Store login session (token or user data)
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user", JSON.stringify(data.user)); // optional
+
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 1500);
+
+      } else {
+        showMessage(data.message || "❌ Invalid email or password.", "error");
+      }
+
+    } catch (error) {
+      console.error("Login error:", error);
+      showMessage("⚠️ Cannot connect to server.", "error");
     }
   });
 

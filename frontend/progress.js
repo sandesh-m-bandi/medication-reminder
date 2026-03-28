@@ -1,34 +1,65 @@
 // progress.js
-document.addEventListener("DOMContentLoaded", function () {
-  // Get progress elements
+document.addEventListener("DOMContentLoaded", async function () {
+
   const totalEl = document.getElementById("totalCount");
   const takenEl = document.getElementById("takenCount");
   const missedEl = document.getElementById("missedCount");
 
-  // Fetch reminders data from localStorage (saved by reminders.js)
-  const reminders = JSON.parse(localStorage.getItem("reminders")) || [];
+  // 🔗 Backend URL (CHANGE THIS)
+  const API_URL = "https://medication-reminder-gvb4.onrender.com";
 
+  let reminders = [];
+
+  // -------------------------------
+  // Fetch reminders from backend
+  // -------------------------------
+  try {
+    const res = await fetch(`${API_URL}/reminders/all`);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch reminders");
+    }
+
+    reminders = await res.json();
+
+  } catch (err) {
+    console.error("❌ Error fetching reminders:", err);
+
+    document.querySelector(".progress-container").innerHTML = `
+      <p style="text-align:center; color:red;">
+        ⚠️ Unable to load data. Check backend connection.
+      </p>
+    `;
+    return;
+  }
+
+  // -------------------------------
   // Calculate counts
+  // -------------------------------
   const total = reminders.length;
   const taken = reminders.filter(r => r.status === "taken").length;
   const missed = reminders.filter(r => r.status === "missed").length;
+  const pending = total - taken - missed;
 
-  // Update stats on the page
+  // -------------------------------
+  // Update UI
+  // -------------------------------
   totalEl.textContent = total;
   takenEl.textContent = taken;
   missedEl.textContent = missed;
 
-  // Prepare data for Chart.js
+  // -------------------------------
+  // Chart.js Data
+  // -------------------------------
   const data = {
     labels: ["Taken 💊", "Missed ❌", "Pending ⏳"],
     datasets: [{
-      data: [taken, missed, total - taken - missed],
+      data: [taken, missed, pending],
       backgroundColor: ["#4caf50", "#f44336", "#ff9800"],
       hoverOffset: 12
     }]
   };
 
-  // Configure the chart
   const config = {
     type: "pie",
     data: data,
@@ -36,33 +67,31 @@ document.addEventListener("DOMContentLoaded", function () {
       responsive: true,
       plugins: {
         legend: {
-          position: "bottom",
-          labels: {
-            color: "#333",
-            font: { size: 14 }
-          }
+          position: "bottom"
         },
         title: {
           display: true,
-          text: "Medicine Intake Progress 💊",
-          font: { size: 20 },
-          color: "#333"
+          text: "Medicine Intake Progress 💊"
         }
       }
     }
   };
 
-  // Render chart
+  // -------------------------------
+  // Render Chart
+  // -------------------------------
   const ctx = document.getElementById("progressChart");
   if (ctx) {
     new Chart(ctx, config);
   }
 
-  // Message if no reminders
+  // -------------------------------
+  // No data message
+  // -------------------------------
   if (total === 0) {
     document.querySelector(".progress-container").innerHTML = `
       <p style="text-align:center; font-size:18px; color:#666;">
-        No reminders added yet. Go to <strong>Reminders</strong> to add your first one! 🕒
+        No reminders found. Add reminders first! 🕒
       </p>
     `;
   }

@@ -43,12 +43,17 @@
 
 
 // 🕒 Dynamic time inputs based on frequency
+// 🔗 Your Render Backend URL (CHANGE THIS)
+const API_URL = "https://medication-reminder-gvb4.onrender.com";
+
+// Elements
 const frequencySelect = document.getElementById("frequency");
 const timeFieldsContainer = document.getElementById("timeFields");
 
+// 🔁 Handle frequency change
 frequencySelect.addEventListener("change", () => {
   const freq = frequencySelect.value;
-  timeFieldsContainer.innerHTML = ""; // Clear old fields
+  timeFieldsContainer.innerHTML = "";
 
   let count = 1;
   if (freq === "once") count = 1;
@@ -56,10 +61,11 @@ frequencySelect.addEventListener("change", () => {
   else if (freq === "thrice") count = 3;
   else if (freq === "4times") count = 4;
 
-  // Dynamically create time inputs
+  // Create time inputs dynamically
   for (let i = 1; i <= count; i++) {
     const label = document.createElement("label");
     label.textContent = `Time ${i}`;
+
     const input = document.createElement("input");
     input.type = "time";
     input.id = `time${i}`;
@@ -70,7 +76,7 @@ frequencySelect.addEventListener("change", () => {
   }
 });
 
-// 💊 Handle form submission
+// 💊 Handle form submit
 document.getElementById("medicineForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -80,17 +86,15 @@ document.getElementById("medicineForm").addEventListener("submit", async (e) => 
   const start_date = document.getElementById("startDate").value;
   const end_date = document.getElementById("endDate").value;
 
-  // Gather time fields dynamically
+  // Collect time inputs
   const times = {};
   const timeInputs = timeFieldsContainer.querySelectorAll("input[type='time']");
   timeInputs.forEach((input, index) => {
     times[`time${index + 1}`] = input.value;
   });
 
-  // Automatically set today's date
-  const today = new Date().toISOString().split("T")[0]; // 'YYYY-MM-DD'
+  const today = new Date().toISOString().split("T")[0];
 
-  // Construct medicine object
   const newMedicine = {
     name,
     dosage,
@@ -98,24 +102,32 @@ document.getElementById("medicineForm").addEventListener("submit", async (e) => 
     start_date,
     end_date,
     today,
-    ...times, // spreads all time fields (time1, time2, etc.)
+    ...times
   };
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/medicines/add", {
+    const response = await fetch(`${API_URL}/medicines/add`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMedicine),
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(newMedicine)
     });
 
-    const result = await response.json();
-    alert(result.message);
+    // 🔴 Handle server errors properly
+    if (!response.ok) {
+      throw new Error("Server error");
+    }
 
-    // Optionally reset the form
+    const result = await response.json();
+    alert(result.message || "Medicine added successfully!");
+
+    // Reset form
     document.getElementById("medicineForm").reset();
-    timeFieldsContainer.innerHTML = ""; // Clear time fields
+    timeFieldsContainer.innerHTML = "";
+
   } catch (error) {
-    console.error("Error saving medicine:", error);
-    alert("Failed to save medicine. Please try again.");
+    console.error("Error:", error);
+    alert("Failed to save medicine. Check backend connection.");
   }
 });

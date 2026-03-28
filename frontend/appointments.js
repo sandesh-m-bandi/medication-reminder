@@ -1,15 +1,13 @@
-// -------------------------------
-// Select DOM elements
-// -------------------------------
 const form = document.getElementById("appointmentForm");
 const specializationSelect = document.getElementById("specialization");
 const doctorSelect = document.getElementById("doctorName");
 const appointmentsList = document.getElementById("appointmentsList");
 const noAppointmentsMsg = document.getElementById("noAppointmentsMsg");
 
-const API_BASE = "http://127.0.0.1:5000"; // backend for doctors
+// 🔗 ✅ CHANGE THIS TO YOUR RENDER BACKEND URL
+const API_BASE = "https://medication-reminder-gvb4.onrender.com";
 
-let allDoctors = []; // store doctors globally
+let allDoctors = [];
 
 // -------------------------------
 // Load doctors from backend
@@ -17,11 +15,17 @@ let allDoctors = []; // store doctors globally
 async function loadDoctors() {
   try {
     const res = await fetch(`${API_BASE}/doctors/all`);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch doctors");
+    }
+
     const doctors = await res.json();
     allDoctors = doctors;
 
     // Populate specialization dropdown
     const specializations = [...new Set(doctors.map(doc => doc.specialization))];
+
     specializationSelect.innerHTML = `<option value="">Select specialization</option>`;
     specializations.forEach(spec => {
       const option = document.createElement("option");
@@ -30,30 +34,36 @@ async function loadDoctors() {
       specializationSelect.appendChild(option);
     });
 
-    // Start with doctor dropdown empty
+    // Reset doctor dropdown
     doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
 
-    // When specialization changes → filter doctors
-    specializationSelect.addEventListener("change", () => {
-      const selectedSpec = specializationSelect.value;
-      if (selectedSpec) {
-        const filtered = allDoctors.filter(doc => doc.specialization === selectedSpec);
-        populateDoctorDropdown(filtered);
-      } else {
-        doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
-      }
-    });
-
   } catch (err) {
-    console.error("Error loading doctors:", err);
+    console.error("❌ Error loading doctors:", err);
+    alert("Failed to load doctors. Check backend connection.");
   }
 }
+
+// -------------------------------
+// Filter doctors based on specialization
+// -------------------------------
+specializationSelect.addEventListener("change", () => {
+  const selectedSpec = specializationSelect.value;
+
+  if (!selectedSpec) {
+    doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
+    return;
+  }
+
+  const filtered = allDoctors.filter(doc => doc.specialization === selectedSpec);
+  populateDoctorDropdown(filtered);
+});
 
 // -------------------------------
 // Populate doctor dropdown
 // -------------------------------
 function populateDoctorDropdown(doctorsArray) {
   doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
+
   doctorsArray.forEach(doc => {
     const option = document.createElement("option");
     option.value = doc.name;
@@ -79,7 +89,10 @@ function loadAppointments() {
   appointments.forEach((app, index) => {
     const card = document.createElement("div");
     card.className = "appointment-card";
-    if(app.status === "done") card.classList.add("done");
+
+    if (app.status === "done") {
+      card.classList.add("done");
+    }
 
     card.innerHTML = `
       <p><b>Patient:</b> ${app.patientName}</p>
@@ -93,10 +106,11 @@ function loadAppointments() {
       <p><b>Notes:</b> ${app.notes || "-"}</p>
       <p><b>Status:</b> ${app.status}</p>
       <div class="flex justify-center gap-4 mt-3">
-        <button class="bg-green-500 text-white px-4 py-1 rounded done-btn" data-id="${index}">✔️ Done</button>
-        <button class="bg-red-500 text-white px-4 py-1 rounded delete-btn" data-id="${index}">🗑️ Delete</button>
+        <button class="done-btn" data-id="${index}">✔️ Done</button>
+        <button class="delete-btn" data-id="${index}">🗑️ Delete</button>
       </div>
     `;
+
     appointmentsList.appendChild(card);
   });
 
@@ -173,7 +187,7 @@ form.addEventListener("submit", e => {
 });
 
 // -------------------------------
-// Initialize Everything
+// Initialize
 // -------------------------------
 loadDoctors();
 loadAppointments();

@@ -3,7 +3,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("signupForm");
   const messageBox = document.getElementById("messageBox");
 
-  form.addEventListener("submit", function (e) {
+  // 🔗 Backend URL
+  const API_URL = "https://medication-reminder-gvb4.onrender.com";
+
+  form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const username = document.getElementById("username").value.trim();
@@ -22,16 +25,36 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // Store credentials (for now, in localStorage)
-    const user = { username, email, password };
-    localStorage.setItem("user", JSON.stringify(user));
+    try {
+      const response = await fetch(`${API_URL}/users/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, email, password })
+      });
 
-    showMessage("✅ Signup successful! Please login now.", "success");
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
 
-    // Redirect after a short delay
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 1500);
+      const data = await response.json();
+
+      if (data.success) {
+        showMessage("✅ Signup successful! Please login.", "success");
+
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+
+      } else {
+        showMessage(data.message || "Signup failed.", "error");
+      }
+
+    } catch (error) {
+      console.error("Signup error:", error);
+      showMessage("⚠️ Cannot connect to server.", "error");
+    }
   });
 
   function showMessage(msg, type) {
