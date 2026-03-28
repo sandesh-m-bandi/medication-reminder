@@ -5,9 +5,9 @@ load_dotenv()
 
 def get_db_connection():
     conn = MySQLdb.connect(
-        host=os.environ.get("DB_HOST"),
-        user=os.environ.get("DB_USER"),
-        passwd=os.environ.get("DB_PASSWORD"),
-        db=os.environ.get("DB_NAME")
+        host=os.environ.get("dpg-d73av49r0fns739ao8q0-a"),
+        user=os.environ.get("face_attendence_user"),
+        passwd=os.environ.get("0InGHVSZlus5CJFoUXopnGSezs0ibk4S"),
+        db=os.environ.get("face_attendence")
     )
     return conn
