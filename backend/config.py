@@ -1,13 +1,11 @@
-import MySQLdb
+import psycopg2
 import os
-from dotenv import load_dotenv
-load_dotenv()
 
 def get_db_connection():
-    conn = MySQLdb.connect(
-        host=os.environ.get("dpg-d73av49r0fns739ao8q0-a"),
-        user=os.environ.get("face_attendence_user"),
-        passwd=os.environ.get("0InGHVSZlus5CJFoUXopnGSezs0ibk4S"),
-        db=os.environ.get("face_attendence")
-    )
+    database_url = os.getenv("postgresql://face_attendence_user:0InGHVSZlus5CJFoUXopnGSezs0ibk4S@dpg-d73av49r0fns739ao8q0-a.oregon-postgres.render.com/face_attendence")
+
+    if not database_url:
+        raise Exception("DATABASE_URL is not set in environment variables")
+
+    conn = psycopg2.connect(database_url)
     return conn
