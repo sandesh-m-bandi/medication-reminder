@@ -1,143 +1,162 @@
 from flask import Blueprint, request, jsonify
 from config import get_db_connection
+from datetime import timedelta
 
 doctors_bp = Blueprint('doctors_bp', __name__)
 
 # ----------------------------
-# ✅ Add a new doctor
+# ✅ Add Doctor
 # ----------------------------
 @doctors_bp.route('/add', methods=['POST'])
 def add_doctor():
-    data = request.get_json()
-    name = data.get('name')
-    specialization = data.get('specialization')
-    hospital_name = data.get('hospital_name')
-    contact_no = data.get('contact_no')
-    available_from = data.get('available_from')
-    available_to = data.get('available_to')
+    try:
+        data = request.get_json()
 
-    if not name or not specialization:
-        return jsonify({"error": "Name and specialization are required"}), 400
+        name = data.get('name')
+        specialization = data.get('specialization')
+        hospital_name = data.get('hospital_name')
+        contact_no = data.get('contact_no')
+        available_from = data.get('available_from')
+        available_to = data.get('available_to')
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+        if not name or not specialization:
+            return jsonify({"error": "Name and specialization are required"}), 400
 
-    cur.execute("""
-        INSERT INTO doctors (name, specialization, hospital_name, contact_no, available_from, available_to)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (name, specialization, hospital_name, contact_no, available_from, available_to))
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        cur.execute("""
+            INSERT INTO doctors (name, specialization, hospital_name, contact_no, available_from, available_to)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (name, specialization, hospital_name, contact_no, available_from, available_to))
 
-    return jsonify({"message": "Doctor added successfully!"}), 201
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": "Doctor added successfully!"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ----------------------------
-# ✅ Fetch all doctors (FIXED)
+# ✅ Get All Doctors
 # ----------------------------
 @doctors_bp.route('/all', methods=['GET'])
 def get_all_doctors():
-    conn = get_db_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    cur.execute("SELECT * FROM doctors ORDER BY name;")
-    
-    rows = cur.fetchall()
-    columns = [desc[0] for desc in cur.description]
+        cur.execute("SELECT * FROM doctors ORDER BY name;")
 
-    doctors = []
-    for row in rows:
-        doc = dict(zip(columns, row))
+        rows = cur.fetchall()
+        columns = [desc[0] for desc in cur.description]
 
-        # Convert datetime/timedelta
-        for key, value in doc.items():
-            if hasattr(value, 'isoformat'):
-                doc[key] = value.isoformat()
-            elif str(type(value)) == "<class 'datetime.timedelta'>":
-                total_seconds = int(value.total_seconds())
-                hours = total_seconds // 3600
-                minutes = (total_seconds % 3600) // 60
-                seconds = total_seconds % 60
-                doc[key] = f"{hours:02}:{minutes:02}:{seconds:02}"
+        doctors = []
 
-        doctors.append(doc)
+        for row in rows:
+            doc = dict(zip(columns, row))
 
-    cur.close()
-    conn.close()
+            # Convert datetime / timedelta
+            for key, value in doc.items():
+                if isinstance(value, timedelta):
+                    total_seconds = int(value.total_seconds())
+                    doc[key] = str(timedelta(seconds=total_seconds))
+                elif hasattr(value, "isoformat"):
+                    doc[key] = value.isoformat()
 
-    return jsonify(doctors)
+            doctors.append(doc)
+
+        cur.close()
+        conn.close()
+
+        return jsonify(doctors)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ----------------------------
-# ✅ Get doctor by ID (FIXED)
+# ✅ Get Doctor by ID
 # ----------------------------
 @doctors_bp.route('/<int:id>', methods=['GET'])
 def get_doctor(id):
-    conn = get_db_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    cur.execute("SELECT * FROM doctors WHERE id = %s;", (id,))
-    
-    row = cur.fetchone()
+        cur.execute("SELECT * FROM doctors WHERE id = %s;", (id,))
+        row = cur.fetchone()
 
-    if not row:
+        if not row:
+            return jsonify({"error": "Doctor not found"}), 404
+
+        columns = [desc[0] for desc in cur.description]
+        doctor = dict(zip(columns, row))
+
         cur.close()
         conn.close()
-        return jsonify({"error": "Doctor not found"}), 404
 
-    columns = [desc[0] for desc in cur.description]
-    doctor = dict(zip(columns, row))
+        return jsonify(doctor)
 
-    cur.close()
-    conn.close()
-
-    return jsonify(doctor)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ----------------------------
-# ✅ Update doctor (no change needed)
+# ✅ Update Doctor
 # ----------------------------
 @doctors_bp.route('/update/<int:id>', methods=['PUT'])
 def update_doctor(id):
-    data = request.get_json()
-    fields = []
-    values = []
+    try:
+        data = request.get_json()
+        fields = []
+        values = []
 
-    for key in ['name', 'specialization', 'hospital_name', 'contact_no', 'available_from', 'available_to', 'gender']:
-        if key in data:
-            fields.append(f"{key} = %s")
-            values.append(data[key])
+        for key in ['name', 'specialization', 'hospital_name', 'contact_no', 'available_from', 'available_to']:
+            if key in data:
+                fields.append(f"{key} = %s")
+                values.append(data[key])
 
-    if not fields:
-        return jsonify({"error": "No fields to update"}), 400
+        if not fields:
+            return jsonify({"error": "No fields to update"}), 400
 
-    values.append(id)
+        values.append(id)
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(f"UPDATE doctors SET {', '.join(fields)} WHERE id = %s;", values)
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        query = f"UPDATE doctors SET {', '.join(fields)} WHERE id = %s;"
+        cur.execute(query, values)
 
-    return jsonify({"message": "Doctor updated successfully!"})
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": "Doctor updated successfully!"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ----------------------------
-# ✅ Delete doctor (no change needed)
+# ✅ Delete Doctor
 # ----------------------------
 @doctors_bp.route('/delete/<int:id>', methods=['DELETE'])
 def delete_doctor(id):
-    conn = get_db_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    cur.execute("DELETE FROM doctors WHERE id = %s;", (id,))
-    
-    conn.commit()
-    cur.close()
-    conn.close()
+        cur.execute("DELETE FROM doctors WHERE id = %s;", (id,))
 
-    return jsonify({"message": "Doctor deleted successfully!"})
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": "Doctor deleted successfully!"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
