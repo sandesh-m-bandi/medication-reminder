@@ -2,10 +2,16 @@ import psycopg2
 import os
 
 def get_db_connection():
-    database_url = os.getenv("postgresql://face_attendence_user:0InGHVSZlus5CJFoUXopnGSezs0ibk4S@dpg-d73av49r0fns739ao8q0-a.oregon-postgres.render.com/face_attendence")
+    try:
+        # ✅ Correct way: get from environment variable
+        database_url = os.getenv("DATABASE_URL")
 
-    if not database_url:
-        raise Exception("DATABASE_URL is not set in environment variables")
+        if not database_url:
+            raise Exception("DATABASE_URL is not set in environment variables")
 
-    conn = psycopg2.connect(database_url)
-    return conn
+        conn = psycopg2.connect(database_url)
+        return conn
+
+    except Exception as e:
+        print("Database connection error:", str(e))
+        raise
