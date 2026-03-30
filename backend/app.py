@@ -19,7 +19,7 @@ def create_app():
     app.register_blueprint(users_bp, url_prefix='/users')
     app.register_blueprint(medicines_bp, url_prefix='/medicines')
     app.register_blueprint(doctors_bp, url_prefix='/doctors')
-
+    app.register_blueprint(doctors_bp, url_prefix='/doctors')
     # -------------------------------
     # Home Route
     # -------------------------------
