@@ -162,6 +162,11 @@ function markAsDone(id) {
 form.addEventListener("submit", e => {
   e.preventDefault();
 
+  if (!specializationSelect.value || !doctorSelect.value) {
+    alert("Please select specialization and doctor");
+    return;
+  }
+
   const gender = document.querySelector('input[name="gender"]:checked')?.value || "";
 
   const newAppointment = {
@@ -181,13 +186,9 @@ form.addEventListener("submit", e => {
   appointments.push(newAppointment);
   localStorage.setItem("appointments", JSON.stringify(appointments));
 
+  alert("✅ Appointment saved successfully!");
+
   form.reset();
   doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
   loadAppointments();
 });
-
-// -------------------------------
-// Initialize
-// -------------------------------
-loadDoctors();
-loadAppointments();

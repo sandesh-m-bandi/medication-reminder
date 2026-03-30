@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       renderDoctors(doctors);
 
     } catch (error) {
-      console.error(error);
+      console.error("❌ Fetch error:", error);
       docContainer.innerHTML = "<p>⚠️ Failed to load doctors</p>";
     }
   }
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async function () {
       card.style.display = "block";
       card.removeAttribute("id");
 
-      // ✅ FIXED: using ID selectors
+      // ✅ Fill data
       card.querySelector("#doctorName").textContent = doc.name;
       card.querySelector("#doctorSpecialization").textContent = doc.specialization;
       card.querySelector("#doctorHospital").textContent = doc.hospital_name || "N/A";
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
 
       card.querySelector("#contactBtn").onclick = () => {
-        alert(`Calling ${doc.name}... 📞`);
+        alert(`📞 Calling ${doc.name}...`);
       };
 
       docContainer.appendChild(card);
@@ -70,14 +70,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // -------------------------------
-  // 🔍 SEARCH (IMPROVED)
+  // 🔍 SEARCH (LIVE FILTER)
   // -------------------------------
   function filterDoctors() {
     const query = searchBox.value.toLowerCase().trim();
 
     const filtered = allDoctors.filter(doc =>
-      doc.name.toLowerCase().includes(query) ||
-      doc.specialization.toLowerCase().includes(query) ||
+      (doc.name || "").toLowerCase().includes(query) ||
+      (doc.specialization || "").toLowerCase().includes(query) ||
       (doc.hospital_name || "").toLowerCase().includes(query)
     );
 

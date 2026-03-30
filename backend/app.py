@@ -6,6 +6,7 @@ import os
 from routes.user import users_bp
 from routes.medicine import medicines_bp
 from routes.doctors import doctors_bp
+from routes.appointments import appointments_bp
 
 
 def create_app():
