@@ -1,36 +1,37 @@
 document.addEventListener("DOMContentLoaded", async function () {
-  const container = document.querySelector("main");
+
+  const API_BASE = "https://medication-reminder-gvb4.onrender.com";
+
+  const docContainer = document.getElementById("doctorContainer");
+  const template = document.getElementById("doctorTemplate");
   const searchBox = document.getElementById("searchBox");
   const searchBtn = document.getElementById("searchBtn");
   const noResultsMsg = document.querySelector(".no-results");
-  const docContainer = document.getElementById("doctorContainer");
-  const template = document.getElementById("doctorTemplate");
 
-  // 🔗 ✅ CHANGE THIS
-  const API_BASE = "https://medication-reminder-gvb4.onrender.com";
+  let allDoctors = [];
 
   // -------------------------------
-  // 📥 Load doctors from database
+  // 📥 FETCH DOCTORS
   // -------------------------------
-  async function loadDoctorsFromDB() {
+  async function loadDoctors() {
     try {
-      const res = await fetch(`${API_BASE}/all`);
+      const res = await fetch(`${API_BASE}/doctors/all`);
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch doctors");
-      }
+      if (!res.ok) throw new Error("API error");
 
       const doctors = await res.json();
+      allDoctors = doctors;
+
       renderDoctors(doctors);
 
-    } catch (err) {
-      console.error("❌ Error loading doctors:", err);
-      container.innerHTML = `<p class="error">⚠️ Could not load doctors from database.</p>`;
+    } catch (error) {
+      console.error(error);
+      docContainer.innerHTML = "<p>⚠️ Failed to load doctors</p>";
     }
   }
 
   // -------------------------------
-  // 🧠 Render doctors
+  // 🧠 RENDER DOCTORS
   // -------------------------------
   function renderDoctors(doctors) {
     docContainer.innerHTML = "";
@@ -42,64 +43,55 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     noResultsMsg.style.display = "none";
 
-    doctors.forEach((doctor) => {
+    doctors.forEach((doc) => {
       const card = template.cloneNode(true);
+
       card.style.display = "block";
       card.removeAttribute("id");
 
-      card.querySelector("#doctorName").textContent = doctor.name;
-      card.querySelector("#doctorSpecialization").textContent = doctor.specialization;
-      card.querySelector("#doctorHospital").textContent = doctor.hospital_name || "N/A";
-      card.querySelector("#doctorContact").textContent = doctor.contact_no || "N/A";
-      card.querySelector("#doctorGender").textContent = doctor.gender || "N/A";
+      // ✅ FIXED: using ID selectors
+      card.querySelector("#doctorName").textContent = doc.name;
+      card.querySelector("#doctorSpecialization").textContent = doc.specialization;
+      card.querySelector("#doctorHospital").textContent = doc.hospital_name || "N/A";
+      card.querySelector("#doctorContact").textContent = doc.contact_no || "N/A";
+      card.querySelector("#doctorGender").textContent = doc.gender || "N/A";
       card.querySelector("#doctorTimings").textContent =
-        `${doctor.available_from || "--:--"} - ${doctor.available_to || "--:--"}`;
+        `${doc.available_from || "--"} - ${doc.available_to || "--"}`;
 
       card.querySelector("#doctorImage").src =
         "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
 
-      const contactBtn = card.querySelector("#contactBtn");
-      contactBtn.onclick = () => alert(`Calling ${doctor.name}...`);
+      card.querySelector("#contactBtn").onclick = () => {
+        alert(`Calling ${doc.name}... 📞`);
+      };
 
       docContainer.appendChild(card);
     });
   }
 
   // -------------------------------
-  // 🔍 Search filter
+  // 🔍 SEARCH (IMPROVED)
   // -------------------------------
   function filterDoctors() {
     const query = searchBox.value.toLowerCase().trim();
-    const doctorCards = document.querySelectorAll(".doctor-card:not(#doctorTemplate)");
 
-    let visibleCount = 0;
+    const filtered = allDoctors.filter(doc =>
+      doc.name.toLowerCase().includes(query) ||
+      doc.specialization.toLowerCase().includes(query) ||
+      (doc.hospital_name || "").toLowerCase().includes(query)
+    );
 
-    doctorCards.forEach((card) => {
-      const text = card.textContent.toLowerCase();
-
-      if (text.includes(query)) {
-        card.style.display = "block";
-        visibleCount++;
-      } else {
-        card.style.display = "none";
-      }
-    });
-
-    noResultsMsg.style.display = visibleCount === 0 ? "block" : "none";
+    renderDoctors(filtered);
   }
 
-  // -------------------------------
-  // 🎯 Event listeners
-  // -------------------------------
   searchBox.addEventListener("keyup", filterDoctors);
-
   searchBtn.addEventListener("click", (e) => {
     e.preventDefault();
     filterDoctors();
   });
 
   // -------------------------------
-  // 🚀 MAIN EXECUTION
+  // 🚀 INIT
   // -------------------------------
-  await loadDoctorsFromDB();
+  loadDoctors();
 });
