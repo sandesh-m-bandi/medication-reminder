@@ -159,7 +159,7 @@ function markAsDone(id) {
 // -------------------------------
 // Handle form submit
 // -------------------------------
-form.addEventListener("submit", e => {
+form.addEventListener("submit", async e => {
   e.preventDefault();
 
   if (!specializationSelect.value || !doctorSelect.value) {
@@ -178,17 +178,76 @@ form.addEventListener("submit", e => {
     doctor: doctorSelect.value,
     date: document.getElementById("appointmentDate").value,
     time: document.getElementById("appointmentTime").value,
-    notes: document.getElementById("notes").value,
-    status: "pending"
+    notes: document.getElementById("notes").value
   };
 
-  const appointments = JSON.parse(localStorage.getItem("appointments")) || [];
-  appointments.push(newAppointment);
-  localStorage.setItem("appointments", JSON.stringify(appointments));
+  try {
+    const res = await fetch(`${API_BASE}/appointments/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(newAppointment)
+    });
 
-  alert("✅ Appointment saved successfully!");
+    const data = await res.json();
 
-  form.reset();
-  doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
-  loadAppointments();
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to save appointment");
+    }
+
+    alert("✅ Appointment saved to database!");
+
+    form.reset();
+    doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
+    
+    loadAppointmentsFromBackend(); // 👈 NEW
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Error saving appointment");
+  }
 });
+async function loadAppointmentsFromBackend() {
+  try {
+    const res = await fetch(`${API_BASE}/appointments/all`);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch appointments");
+    }
+
+    const appointments = await res.json();
+
+    appointmentsList.innerHTML = "";
+
+    if (appointments.length === 0) {
+      noAppointmentsMsg.style.display = "block";
+      return;
+    }
+
+    noAppointmentsMsg.style.display = "none";
+
+    appointments.forEach(app => {
+      const card = document.createElement("div");
+      card.className = "appointment-card";
+
+      card.innerHTML = `
+        <p><b>Patient:</b> ${app.patient_name}</p>
+        <p><b>Age:</b> ${app.patient_age}</p>
+        <p><b>Contact:</b> ${app.patient_contact}</p>
+        <p><b>Gender:</b> ${app.gender}</p>
+        <p><b>Specialization:</b> ${app.specialization}</p>
+        <p><b>Doctor:</b> ${app.doctor}</p>
+        <p><b>Date:</b> ${app.appointment_date}</p>
+        <p><b>Time:</b> ${app.appointment_time}</p>
+        <p><b>Notes:</b> ${app.notes || "-"}</p>
+      `;
+
+      appointmentsList.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to load appointments");
+  }
+}
